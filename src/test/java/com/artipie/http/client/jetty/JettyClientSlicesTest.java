@@ -39,16 +39,21 @@ import com.artipie.http.rs.RsWithStatus;
 import io.reactivex.Flowable;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.net.ssl.SSLException;
 import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.hamcrest.core.IsInstanceOf;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 /**
  * Tests for {@link JettyClientSlices}.
@@ -63,12 +68,6 @@ import org.junit.jupiter.api.Test;
  *  There is a test in `JettyClientSlicesTest` checking that
  *  non-secure proxy works in `JettyClientSlices`. It's needed to test
  *  support for proxy working over HTTPS protocol.
- * @todo #5:30min Test support for `trustAll` setting in `JettyClientSlices`.
- *  There is no test checking that `trustAll` setting is supported by `JettyClientSlices`.
- *  To check that it is required to start an HTTP server with self-signed certificate
- *  and see that client connects successfully and does not fail verification.
- *  It should also be validated that client with `trustAll` setting disabled does not connect
- *  to such server.
  * @checkstyle ClassDataAbstractionCouplingCheck (500 lines)
  */
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods"})
@@ -313,6 +312,70 @@ final class JettyClientSlicesTest {
             Assertions.assertThrows(
                 TimeoutException.class,
                 () -> received.toCompletableFuture().get(1, TimeUnit.SECONDS)
+            );
+        } finally {
+            client.stop();
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "expired.badssl.com",
+        "self-signed.badssl.com",
+        "untrusted-root.badssl.com"
+    })
+    void shouldTrustAllCertificates(final String url) throws Exception {
+        final JettyClientSlices client = new JettyClientSlices(
+            new Settings.WithTrustAll(true)
+        );
+        try {
+            client.start();
+            MatcherAssert.assertThat(
+                client.https(url).response(
+                    new RequestLine(RqMethod.GET, "/").toString(),
+                    Headers.EMPTY,
+                    Flowable.empty()
+                ),
+                new RsHasStatus(RsStatus.OK)
+            );
+        } finally {
+            client.stop();
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "expired.badssl.com",
+        "self-signed.badssl.com",
+        "untrusted-root.badssl.com"
+    })
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
+    void shouldRejectBadCertificates(final String url) throws Exception {
+        final JettyClientSlices client = new JettyClientSlices(
+            new Settings.WithTrustAll(false)
+        );
+        try {
+            client.start();
+            final Response response = client.https(url).response(
+                new RequestLine(RqMethod.GET, "/").toString(),
+                Headers.EMPTY,
+                Flowable.empty()
+            );
+            final Exception exception = Assertions.assertThrows(
+                CompletionException.class,
+                response
+                    .send(
+                        (status, headers, publisher) ->
+                            CompletableFuture.allOf()
+                    )
+                    .toCompletableFuture()::join
+            );
+            MatcherAssert.assertThat(
+                exception,
+                Matchers.hasProperty(
+                    "cause",
+                    Matchers.isA(SSLException.class)
+                )
             );
         } finally {
             client.stop();
