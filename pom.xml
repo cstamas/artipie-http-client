@@ -119,7 +119,7 @@ SOFTWARE.
     </dependency>
   </dependencies>
   <build>
-    <testResources>
+    <!--<testResources>
       <testResource>
         <filtering>true</filtering>
         <directory>${project.basedir}/src/test/resources</directory>
@@ -134,7 +134,7 @@ SOFTWARE.
           <include>keystore</include>
         </includes>
       </testResource>
-    </testResources>
+    </testResources>-->
     <plugins>
       <plugin>
         <groupId>org.jacoco</groupId>
