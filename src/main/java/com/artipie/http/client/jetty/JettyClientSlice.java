@@ -53,10 +53,6 @@ import org.reactivestreams.Publisher;
  * ClientSlices implementation using Jetty HTTP client as back-end.
  *
  * @since 0.1
- * @todo #1:30min Test HTTPS connection with `JettyClientSlice`.
- *  `JettyClientSlice` is tested with plain HTTP server which is started in tests.
- *  However it should also be tested that class may work with HTTPS protocol as well.
- *  Such tests should be added to the project.
  * @checkstyle ClassDataAbstractionCouplingCheck (500 lines)
  */
 final class JettyClientSlice implements Slice {

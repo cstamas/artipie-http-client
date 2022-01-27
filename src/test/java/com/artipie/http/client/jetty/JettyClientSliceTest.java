@@ -39,6 +39,7 @@ import com.artipie.http.rs.RsWithHeaders;
 import com.artipie.http.rs.RsWithStatus;
 import com.artipie.http.rs.StandardRs;
 import io.reactivex.Flowable;
+import io.vertx.core.http.HttpServerOptions;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
@@ -60,12 +61,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
- * Tests for {@link JettyClientSlice}.
+ * Tests for {@link JettyClientSlice} with HTTP server.
  *
  * @since 0.1
  * @checkstyle ClassDataAbstractionCouplingCheck (500 lines)
  */
-final class JettyClientSliceTest {
+class JettyClientSliceTest {
 
     /**
      * Test server.
@@ -75,7 +76,7 @@ final class JettyClientSliceTest {
     /**
      * HTTP client used in tests.
      */
-    private final HttpClient client = new HttpClient();
+    private HttpClient client;
 
     /**
      * HTTP client sliced being tested.
@@ -84,15 +85,30 @@ final class JettyClientSliceTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        final int port = this.server.start();
+        final int port = this.server.start(this.newHttpServerOptions());
+        this.client = this.newHttpClient();
         this.client.start();
-        this.slice = new JettyClientSlice(this.client, false, "localhost", port);
+        this.slice = new JettyClientSlice(
+            this.client,
+            this.client.getSslContextFactory() != null,
+            "localhost",
+            port
+        );
     }
 
     @AfterEach
     void tearDown() throws Exception {
         this.server.stop();
         this.client.stop();
+    }
+
+    HttpClient newHttpClient() {
+        return new HttpClient();
+    }
+
+    HttpServerOptions newHttpServerOptions() {
+        return new HttpServerOptions()
+            .setPort(0);
     }
 
     @ParameterizedTest
