@@ -27,6 +27,7 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.net.JksOptions;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.junit.jupiter.api.Disabled;
 
 /**
  * Tests for {@link JettyClientSlice} with HTTPS server.
@@ -34,6 +35,7 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
  * @since 0.1
  */
 @SuppressWarnings("PMD.TestClassWithoutTestCases")
+@Disabled()
 public final class JettyClientSliceSecureTest extends JettyClientSliceTest {
 
     @Override
