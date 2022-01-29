@@ -23,6 +23,7 @@
  */
 package com.artipie.http.client.jetty;
 
+import com.artipie.asto.test.TestResource;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.net.JksOptions;
 import org.eclipse.jetty.client.HttpClient;
@@ -49,7 +50,9 @@ public final class JettyClientSliceSecureTest extends JettyClientSliceTest {
             .setSsl(true)
             .setKeyStoreOptions(
                 new JksOptions()
-                    .setPath("keystore")
+                    .setPath(
+                        new TestResource("keystore").asPath().toString()
+                    )
                     .setPassword("123456")
             );
     }
