@@ -25,6 +25,7 @@ package com.artipie.http.client;
 
 import com.artipie.http.Slice;
 import com.artipie.vertx.VertxSliceServer;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.reactivex.core.Vertx;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -66,10 +67,20 @@ public class HttpServer {
      * @return Listened port.
      */
     public int start() {
+        return this.start(new HttpServerOptions().setPort(0));
+    }
+
+    /**
+     * Start the server.
+     * @param options Options to use.
+     * @return Listened port.
+     */
+    public int start(final HttpServerOptions options) {
         this.vertx = Vertx.vertx();
         this.server = new VertxSliceServer(
             this.vertx,
-            (line, headers, body) -> this.handler.get().response(line, headers, body)
+            (line, headers, body) -> this.handler.get().response(line, headers, body),
+            options
         );
         this.port = this.server.start();
         return this.port;
