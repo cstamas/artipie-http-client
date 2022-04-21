@@ -26,4 +26,5 @@ hs_err_pid*
 .classpath
 target/**
 .idea/**
-http.iml
+*.iml
+
